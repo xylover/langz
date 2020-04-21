@@ -1,0 +1,28 @@
+from selenium import webdriver
+from bs4 import BeautifulSoup
+from pymongo import MongoClient
+import time
+
+browser = webdriver.Firefox()
+browser.get('https://www.csdn.net/nav/python')
+client = MongoClient()
+db = client['csnd']
+collection = db['python']
+for i in range(1,30):
+    browser.execute_script('window.scrollTo(0,document.body.scrollHeight)')
+    time.sleep(10)
+
+html = browser.page_source
+bs = BeautifulSoup(html , 'lxml')
+
+inf = {}
+
+for item in bs.find_all('h2'):
+   inf = {
+       'title':item.a.string,
+       'link':item.a['href']
+   }
+   collection.insert(inf)
+
+
+
