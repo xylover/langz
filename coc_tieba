@@ -1,0 +1,41 @@
+#百度贴吧部落冲突吧首页信息
+#Mongo保存
+#selenium使用
+#翻页代码后续更新
+
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import pymongo
+from selenium.common.exceptions import  TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+
+browser = webdriver.Firefox()
+browser.get('https://tieba.baidu.com/')
+wait = WebDriverWait(browser,10)
+input = browser.find_element_by_id('wd1')
+input.send_keys('部落冲突')
+button = browser.find_element_by_xpath('//span[@class="search_btn_wrap search_btn_enter_ba_wrap"]')
+button.click()
+html = browser.page_source
+bs = BeautifulSoup(html , 'lxml')
+items = bs.find_all('li' ,{'class':'j_thread_list clearfix'})
+
+client = pymongo.MongoClient('localhost')
+db = client['weibo']
+collections = db['tiezi']
+
+for item in items:
+    tiezis = {
+        'title':item.find('a').string,
+        'link': 'https://tieba.com' + item.find('a')['href'],
+        '回复数': item.find('span',{'class':'threadlist_rep_num center_text'}).string,
+        '创建时间': item.find('span',{'class':'pull-right is_show_create_time'}).string,
+        '内容': item.find('div',{'class':'threadlist_abs threadlist_abs_onlyline'}).string
+    }
+    collections.insert(tiezis)
+
+client = pymongo.MongoClient('localhost')
+db = client['weibo']
+collections = db['tiezi']
